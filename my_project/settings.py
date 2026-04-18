@@ -44,7 +44,11 @@ INSTALLED_APPS = [
 CHANNEL_LAYERS = {
     "default": {
         #? channels use RAM to store group information
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        # "BACKEND": "channels.layers.InMemoryChannelLayer",
+        'BACKEND': "channels_redis.core.RedisChannelLayer",
+        'CONFIG': {
+            "hosts": [("127.0.0.1", 6379)],
+        },
     }
 }
 
