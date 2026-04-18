@@ -48,7 +48,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     #? The handler 
     async def chat_message(self, event):
-        await self.send(text_data=event["text"])
+        await self.send(text_data=event["message"])
 
     async def disconnect(self, code):
         #? remove channel from group
