@@ -17,6 +17,13 @@ class EchoConsumer(AsyncWebsocketConsumer):
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         print(f"[connect] incoming connection")
+        user = self.scope['user']
+        
+        if user.is_anonymous:
+            print(f"[disconnect] connection rejected")
+            await self.close()
+            return 
+
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         #? Get room name
         self.room_group_name = f"chat_{self.room_name}"
@@ -57,10 +64,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
         #? Send message to the group
         data = json.loads(text_data) # Assume data is sent in JSON
         message = data["message"]
+        user = self.scope["user"]
 
         #* Persist to Postgres (ORM is sync)
         await database_sync_to_async(Message.objects.create) (
             room = self.room_obj[0],
+            sender=user,
             body=message,
         )
 
@@ -74,6 +83,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "type": "chat.message", #? calls the handler (chat_message)
                 #? data to be sent
                 "message": message,
+                "sender": user.username,
                 # "name": "alice",
                 # ...
             }
@@ -81,12 +91,16 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     #? The handler 
     async def chat_message(self, event):
-        await self.send(text_data=event["message"])
+        await self.send(text_data=json.dumps({
+            "message": event["message"],
+            "sender": event["sender"]
+        }))
 
     async def disconnect(self, code):
         #? remove channel from group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name,
-        )
+        if hasattr(self, "room_group_name"):
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name,
+            )
         await super().disconnect(code)

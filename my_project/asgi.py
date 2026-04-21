@@ -23,10 +23,11 @@ django.setup()
 from chat.routing import websocket_urlpatterns
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": URLRouter(websocket_urlpatterns),
+    "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
 })
 
 #? ProtocolTypeRouter: Store what kind of connection we want our server to response to using a dictionary.
