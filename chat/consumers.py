@@ -16,6 +16,7 @@ class EchoConsumer(AsyncWebsocketConsumer):
 
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        print(f"[connect] incoming connection")
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         #? Get room name
         self.room_group_name = f"chat_{self.room_name}"
@@ -34,6 +35,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
             room = self.room_name,
             content=message
         )
+
+        #? The event loop is single threaded, if a blocking io operation (writing to a db synchronously) runs
+        #? the event loop would be paused, disrupting websocket's behavior.
+        # Message.objects.create(room=self.room_name, content=message)
 
         await self.channel_layer.group_send(
             self.room_group_name,
