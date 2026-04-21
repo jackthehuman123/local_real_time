@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Message
+from .models import Message, Room
 import json
 
 class EchoConsumer(AsyncWebsocketConsumer):
@@ -20,20 +20,48 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         #? Get room name
         self.room_group_name = f"chat_{self.room_name}"
+
+        #? Get or create the Room in Postgres
+        self.room_obj = await database_sync_to_async(
+            Room.objects.get_or_create
+            )(name=self.room_name)
+
         #? Add channel to group (self.channel_name belongs to the connection)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
         print(f"[connect] channel_name = {self.channel_name}")
+        
+        def get_messages():
+            return list(
+                Message.objects.filter(room=self.room_obj[0])
+                .select_related("sender")
+                .order_by("timestamp")[:50]
+            )
+
+        messages = await database_sync_to_async(get_messages)()
+
+        history = [
+            {
+                "body": m.body,
+                "sender": m.sender.username if m.sender else "system",
+                "timestamp": m.timestamp.isoformat(),
+            }
+            for m in messages
+        ]
+        
+        #? Load pre-existing messages for new consumer
+        await self.send(text_data=json.dumps({"type": "history", "messages": history}))
+
 
     async def receive(self, text_data):
         #? Send message to the group
-        data = json.loads(text_data)
+        data = json.loads(text_data) # Assume data is sent in JSON
         message = data["message"]
 
         #* Persist to Postgres (ORM is sync)
         await database_sync_to_async(Message.objects.create) (
-            room = self.room_name,
-            content=message
+            room = self.room_obj[0],
+            body=message,
         )
 
         #? The event loop is single threaded, if a blocking io operation (writing to a db synchronously) runs
