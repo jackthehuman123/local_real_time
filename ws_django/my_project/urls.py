@@ -7,6 +7,7 @@ from django.urls import path, include
 import json
 
 @ensure_csrf_cookie
+# Ensure that a cookie is sent back in the JsonResponse in the headers
 def csrf_view(request):
     """GET this endpoint to receive the csrftoken cookie."""
     return JsonResponse({"detail": "CSRF cookie set"})
