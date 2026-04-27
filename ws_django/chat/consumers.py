@@ -92,6 +92,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
     #? The handler 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
+            "type": "chat.message",
             "message": event["message"],
             "sender": event["sender"]
         }))
