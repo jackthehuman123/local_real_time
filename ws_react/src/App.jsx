@@ -11,11 +11,12 @@ function AppInner() {
   const [rooms, setRooms] = useState([]);
   const [activeRoom, setActiveRoom] = useState(null);
   const { messages, send, status } = useWebSocket(activeRoom); //? Pass in activeRoom ids
+  const apiBase = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     if (!user) return;
     //! Any requests made to the backend requires credentials for authentication
-    fetch("/api/rooms/", { credentials: "include" })
+    fetch(`/api/rooms/`, { credentials: "include" })
       .then((r) => r.json())
       // .then(console.log);
       .then((data) => {

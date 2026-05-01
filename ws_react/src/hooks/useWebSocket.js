@@ -51,7 +51,7 @@ export function useWebSocket(roomId) {
 
     function connect() {
       setStatus("connecting");
-      const ws = new WebSocket(`ws://localhost:5173/ws/chat/${roomId}/`);
+      const ws = new WebSocket(`/ws/chat/${roomId}/`);
       wsRef.current = ws;
 
       ws.onopen = () => {

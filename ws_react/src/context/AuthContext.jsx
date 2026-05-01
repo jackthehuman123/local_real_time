@@ -7,11 +7,13 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   async function loginUser(username, password) {
-    // Step 1: GET /api/csrf/ so Django sets the csrftoken cookie
-    await fetch("/api/csrf/");
+    // const apiBase = import.meta.env.VITE_API_BASE_URL;
 
-    // Step 2: POST credentials - include csrftoken cookie value as header 
-    const response = await fetch("/api/login/", {
+    // Step 1: GET /api/csrf/ so Django sets the csrftoken cookie
+    await fetch(`/api/csrf/`);
+
+    // Step 2: POST credentials - include csrftoken cookie value as header
+    const response = await fetch(`/api/login/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,7 +33,9 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login: loginUser, logout: logoutUser }}>
+    <AuthContext.Provider
+      value={{ user, login: loginUser, logout: logoutUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
