@@ -25,6 +25,13 @@ function AppInner() {
       });
   }, [user]);
 
+  function handleJoin(roomName) {
+    if (!rooms.includes(roomName)) {
+      setRooms((prev) => [...prev, roomName]);
+    }
+    setActiveRoom(roomName);
+  }
+
   if (!user) return <LoginForm />;
 
   return (
@@ -33,6 +40,7 @@ function AppInner() {
         rooms={rooms}
         activeRoom={activeRoom}
         onSelect={setActiveRoom}
+        onJoin={handleJoin}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div

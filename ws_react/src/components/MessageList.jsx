@@ -7,7 +7,11 @@ export default function MessageList({ messages }) {
   const hasScrolledToBottom = useRef(false);
 
   useEffect(() => {
-    if (messages.length > 0 && !hasScrolledToBottom.current) {
+    if (messages.length === 0) {
+      hasScrolledToBottom.current = false;
+      return;
+    }
+    if (!hasScrolledToBottom.current) {
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
       hasScrolledToBottom.current = true;
     }

@@ -54,8 +54,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "body": m.body,
                 "sender": m.sender.username if m.sender else "system",
                 "timestamp": m.timestamp.isoformat(),
+                "seq": i,
             }
-            for m in messages
+            for i, m in enumerate(messages)
         ]
         
         #? Load pre-existing messages for new consumer

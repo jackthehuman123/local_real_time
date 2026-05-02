@@ -14,7 +14,6 @@ export function useWebSocket(roomId) {
   const wsRef = useRef(null);
   const retryDelay = useRef(1000); // ms
   const retryTimer = useRef(null);
-  const shouldReconnect = useRef(true);
 
   //? Uncomment for exercise 8
   // const [optimisticMessages, addOptimisticMessage] = useOptimistic(
@@ -46,7 +45,8 @@ export function useWebSocket(roomId) {
   useEffect(() => {
     if (!roomId) return;
 
-    shouldReconnect.current = true;
+    setMessages([]);
+    let active = true; // scoped to this effect invocation
     retryDelay.current = 1000;
 
     function connect() {
@@ -61,6 +61,7 @@ export function useWebSocket(roomId) {
       };
 
       ws.onmessage = (event) => {
+        if (!active) return;
         const data = JSON.parse(event.data);
         console.log("[ws] received: ", data);
 
@@ -88,7 +89,7 @@ export function useWebSocket(roomId) {
 
       ws.onclose = (event) => {
         setStatus("disconnected");
-        if (!shouldReconnect.current) return;
+        if (!active) return;
 
         console.log(`[ws] closed. Retrying in ${retryDelay.current} ms...`);
         retryTimer.current = setTimeout(() => {
@@ -105,10 +106,9 @@ export function useWebSocket(roomId) {
 
     connect();
 
-    // Cleanup: close connection when roomId changes or components unmounts
+    // Cleanup: close connection when roomId changes or component unmounts
     return () => {
-      //? Since we are calling ws.close(), we need to clear retry states
-      shouldReconnect.current = false;
+      active = false; // prevent stale onclose from reconnecting
       clearTimeout(retryTimer.current);
       wsRef.current?.close();
     };
