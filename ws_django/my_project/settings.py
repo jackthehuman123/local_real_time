@@ -85,6 +85,16 @@ SESSION_COOKIE_SECURE = False #! True in production
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = False
 
+CELERY_BROKER_URL = "redis://redis:6379/1" 
+CELERY_RESULT_BACKEND = "redis://redis:6379/1"
+# Used by your direct aioredis client in consumers.py
+REDIS_URL = "redis://redis:6379/0"
+
+#? Note: Your Channels layer already uses Redis on database `0` (`redis://redis:6379/0`).
+#? Celery is pointed at database `1` to keep the two namespaces separate on the
+#? same Redis instance. Redis supports 16 logical databases (0–15) by default —
+#? they share memory but have isolated keyspaces.
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

@@ -34,5 +34,27 @@ services:
       - DJANGO_SETTINGS_MODULE=my_project.settings
       - PYTHONUNBUFFERED=1
 
+  celery:
+    build: ./ws_django
+    command: celery -A my_project worker --loglevel=info
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  celery-beat:
+    build: ./ws_django
+    command: celery -A my_project beat --loglevel=info
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+
 volumes:
   postgres_data: {}

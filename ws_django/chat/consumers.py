@@ -2,18 +2,18 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Message, Room
 import json
+import redis.asyncio as aioredis
+from django.conf import settings
 
-import asyncio
-
-class EchoConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        await self.accept()
+# class EchoConsumer(AsyncWebsocketConsumer):
+#     async def connect(self):
+#         await self.accept()
         
-    async def receive(self, text_data):
-        await self.send(text_data=text_data)
+#     async def receive(self, text_data):
+#         await self.send(text_data=text_data)
 
-    async def disconnect(self, code):
-        return await super().disconnect(code)    
+#     async def disconnect(self, code):
+#         return await super().disconnect(code)    
     
 
 class RoomConsumer(AsyncWebsocketConsumer):
@@ -60,6 +60,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         
         #? Load pre-existing messages for new consumer
         await self.send(text_data=json.dumps({"type": "history", "messages": history}))
+        self.redis = aioredis.from_url(settings.REDIS_URL)
 
 
     async def receive(self, text_data):
@@ -79,6 +80,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         #? the event loop would be paused, disrupting websocket's behavior.
         # Message.objects.create(room=self.room_name, content=message)
         
+        #? Atomic increment - returns the next sequence number for this room
+        seq = await self.redis.incr(f"room:{self.room_obj[0].id}:seq")
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -87,6 +91,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "message": message,
                 "sender": user.username,
                 "timestamp": msg.timestamp.isoformat(),
+                "seq": seq,
                 # "name": "alice",
                 # ...
             }
@@ -98,7 +103,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
             "type": "chat.message",
             "message": event["message"],
             "sender": event["sender"],
-            "timestamp": event["timestamp"]
+            "timestamp": event["timestamp"],
+            "seq": event["seq"]
         }))
 
     async def disconnect(self, code):

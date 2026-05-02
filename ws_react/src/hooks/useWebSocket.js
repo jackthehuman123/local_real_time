@@ -69,14 +69,20 @@ export function useWebSocket(roomId) {
           setMessages(data.messages);
         } else if (data.type === "chat.message") {
           // Append live message
-          setMessages((prev) => [
-            ...prev,
-            {
-              body: data.message,
-              sender: data.sender,
-              timestamp: data.timestamp,
-            },
-          ]);
+          setMessages((prev) => {
+            const updated = [
+              ...prev,
+              {
+                body: data.message,
+                sender: data.sender,
+                timestamp: data.timestamp,
+                seq: data.seq,
+              },
+            ];
+            return updated.sort(
+              (a, b) => (a.seq ?? Infinity) - (b.seq ?? Infinity),
+            );
+          });
         }
       };
 

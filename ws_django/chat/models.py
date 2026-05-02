@@ -18,9 +18,10 @@ class Message(models.Model):
                                blank=True)
     body = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    seq = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
-        ordering = ["timestamp"]
+        ordering = ["seq", "timestamp"]
 
     def __str__(self):
         return f"{self.sender} in {self.room}: {self.body[:50]}"
